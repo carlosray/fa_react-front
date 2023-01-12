@@ -1,0 +1,73 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/carlosray/fa_react-front
+  pullPolicy: IfNotPresent
+imagePullSecrets: [ ]
+
+podAnnotations: { }
+podSecurityContext: { }
+securityContext: { }
+
+service:
+  type: ClusterIP
+  port: 80
+
+container:
+  port: 3000
+
+ingress:
+  enabled: true
+  hosts:
+    - host: fa.ipvz.ml
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - fa.ipvz.ml
+
+yc:
+  authorizedKey: <FILL>
+  certId: <FILL>
+
+env:
+  - name: REACT_APP_BACKEND_URI
+    value: "https://fa.ipvz.ml/api"
+
+config:
+  mountPath: /etc/nginx/conf.d
+  value:
+    example: test
+
+secret:
+  mountPath: /etc/secret
+  value:
+    example: test
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 512Mi
+  requests:
+    cpu: 150m
+    memory: 256Mi
+
+probe:
+  readiness:
+    path: /
+    failureThreshold: 3
+    periodSeconds: 10
+    successThreshold: 1
+  liveness:
+    failureThreshold: 3
+    periodSeconds: 10
+    successThreshold: 1
+  startup:
+    failureThreshold: 30
+    periodSeconds: 10
+    successThreshold: 1
+
+nodeSelector: { }
+tolerations: [ ]
+affinity: { }
