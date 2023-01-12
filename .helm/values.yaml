@@ -14,7 +14,7 @@ service:
   port: 80
 
 container:
-  port: 3000
+  port: 80
 
 ingress:
   enabled: true
