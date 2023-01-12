@@ -54,16 +54,18 @@ spec:
           {{- end }}
           {{- with .Values.probe.liveness }}
           livenessProbe:
-            tcpSocket:
+            httpGet:
               port: {{ $httpPort }}
+              path: {{ .path }}
             failureThreshold: {{ .failureThreshold }}
             periodSeconds: {{ .periodSeconds }}
             successThreshold: {{ .successThreshold }}
           {{- end }}
           {{- with .Values.probe.startup }}
           startupProbe:
-            tcpSocket:
+            httpGet:
               port: {{ $httpPort }}
+              path: {{ .path }}
             failureThreshold: {{ .failureThreshold }}
             periodSeconds: {{ .periodSeconds }}
             successThreshold: {{ .successThreshold }}

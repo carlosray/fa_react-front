@@ -60,10 +60,12 @@ probe:
     periodSeconds: 10
     successThreshold: 1
   liveness:
+    path: /
     failureThreshold: 3
     periodSeconds: 10
     successThreshold: 1
   startup:
+    path: /
     failureThreshold: 30
     periodSeconds: 10
     successThreshold: 1
