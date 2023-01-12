@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/carlosray/fa_react-front
+  repository: ghcr.io/carlosray/fa_react-front/frontend
   pullPolicy: IfNotPresent
 imagePullSecrets: [ ]
 
