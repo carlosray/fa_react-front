@@ -11,7 +11,7 @@ on:
       - 'src/**'
 
 env:
-  IMAGE: docker.pkg.github.com/${{ github.repository }}:${{ github.sha }}
+  IMAGE: docker.pkg.github.com/${{ github.repository }}/frontend:${{ github.sha }}
 
 jobs:
   build-and-push-image:
