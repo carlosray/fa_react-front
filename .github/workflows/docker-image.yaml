@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image CI -> K8s Deploy
 
 on:
   workflow_dispatch:
@@ -31,3 +31,21 @@ jobs:
           docker build --tag ${IMAGE} .
           docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
           docker push ${IMAGE}
+          
+  change-helm-app-version:
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
+      
+      - name: Commit new helm appVersion
+        env:
+          APP_VERSION: ${{ github.sha }}
+        run: |
+          cd .helm
+          sed -i "/^\([[:space:]]*appVersion: \).*/s//\1\"${APP_VERSION}\"/" Chart.yaml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git commit -m "Changed helm app version"
+          git push
