@@ -43,6 +43,33 @@ spec:
           ports:
             - containerPort: {{ $httpPort }}
               name: http
+          {{- with .Values.probe.readiness }}
+          readinessProbe:
+            httpGet:
+              port: {{ $httpPort }}
+              path: {{ .path }}
+            failureThreshold: {{ .failureThreshold }}
+            periodSeconds: {{ .periodSeconds }}
+            successThreshold: {{ .successThreshold }}
+          {{- end }}
+          {{- with .Values.probe.liveness }}
+          livenessProbe:
+            httpGet:
+              port: {{ $httpPort }}
+              path: {{ .path }}
+            failureThreshold: {{ .failureThreshold }}
+            periodSeconds: {{ .periodSeconds }}
+            successThreshold: {{ .successThreshold }}
+          {{- end }}
+          {{- with .Values.probe.startup }}
+          startupProbe:
+            httpGet:
+              port: {{ $httpPort }}
+              path: {{ .path }}
+            failureThreshold: {{ .failureThreshold }}
+            periodSeconds: {{ .periodSeconds }}
+            successThreshold: {{ .successThreshold }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
