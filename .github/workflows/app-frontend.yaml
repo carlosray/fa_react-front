@@ -1,4 +1,4 @@
-name: Docker Image CI -> K8s Deploy
+name: Frontend App CI
 
 on:
   workflow_dispatch:
@@ -47,5 +47,5 @@ jobs:
           sed -i "/^\([[:space:]]*appVersion: \).*/s//\1\"${APP_VERSION}\"/" Chart.yaml
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git commit -m "Changed helm app version"
+          git commit -a -m "Changed helm app version"
           git push
