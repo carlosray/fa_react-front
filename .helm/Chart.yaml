@@ -3,4 +3,4 @@ name: frontend
 description: A Helm chart for Finance Tracker Frontend
 type: application
 version: 1.0.0
-appVersion: "66f72eebee9428bc368dc789ebd89f27fd31888c"
+appVersion: "64c39e2ad969263c65fb56e75cc729c2de99c710"
