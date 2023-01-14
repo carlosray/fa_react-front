@@ -19,7 +19,7 @@ import ValidatorService from "../../service/ValidatorService";
 
 const theme = createTheme();
 
-export default function SignIn() {
+export default function SignIn(props) {
     const [form, setForm] = React.useState({
         email: '',
         password: '',
@@ -30,6 +30,8 @@ export default function SignIn() {
         email: [],
         password: [],
     })
+
+    const [loggedIn, setLoggedIn] = React.useState(false)
 
     const handleChange = (event) => {
         const field = event.target.name
@@ -60,14 +62,17 @@ export default function SignIn() {
             password: pwdValidation
         })
         if (emailValidation.length === 0 && pwdValidation.length === 0) {
-            // console.log(JSON.stringify(form))
-            RestService.registerSuccessfulLoginForJwt(form.email, form.password)
+            RestService.login(form.email, form.password)
+                .then(() => setLoggedIn(true))
+                .catch((r) => {
+                    props.alert("Failed to login", RestService.getErrorMessageFromResponse(r.response))
+                })
         }
     };
 
     return (
         <ThemeProvider theme={theme}>
-            {RestService.isUserLoggedIn() && <Redirect to={Paths.MAIN.path}/>}
+            {(loggedIn || RestService.isUserLoggedIn()) && <Redirect to={Paths.MAIN.path}/>}
             <Container component="main" maxWidth="xs">
                 <CssBaseline/>
                 <Box

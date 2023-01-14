@@ -16,10 +16,11 @@ import RestService from "../../service/RestService";
 import {Redirect} from "react-router-dom";
 import {Paths} from "../../model/paths";
 import ValidatorService from "../../service/ValidatorService";
+import {Severities} from "../../model/severities";
 
 const theme = createTheme();
 
-export default function SignUp() {
+export default function SignUp(props) {
     const [form, setForm] = React.useState({
         email: '',
         password: '',
@@ -67,8 +68,16 @@ export default function SignUp() {
             firstName: firstNameValidation
         })
         if (emailValidation.length === 0 && pwdValidation.length === 0 && firstNameValidation.length === 0) {
-            // console.log(JSON.stringify(form))
-            RestService.registerSuccessfulLoginForJwt(form.email, form.password)
+            RestService.register(form)
+                .then(r => {
+                    props.alert("Registered", `User with login ${r.data.login} is registered`, Severities.SUCCESS, 2000, () => {
+                        document.location.href = Paths.SIGN_IN.path
+                    })
+
+                })
+                .catch(r => {
+                    props.alert("Failed to register", RestService.getErrorMessageFromResponse(r.response))
+                })
         }
     };
 

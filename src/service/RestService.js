@@ -1,74 +1,80 @@
-import axios from 'axios'
+import axios, {AxiosResponse} from 'axios'
 import {OperationTypes} from "../model/operationTypes";
 import {Currencies} from "../model/currencies";
 import {Paths} from "../model/paths";
 
-const API_URL = process.env.REACT_APP_BACKEND_URI + "/api"
-const AUTH_URL = process.env.REACT_APP_BACKEND_URI + "/auth"
+const API_URL = process.env.REACT_APP_BACKEND_URI
 
 const USER_NAME_SESSION_ATTRIBUTE_NAME = 'authenticatedUser'
-const TOKEN_SESSION_ATTRIBUTE_NAME = 'jwtToken'
+const ACCESS_TOKEN_ATTRIBUTE_NAME = 'accessToken'
+const REFRESH_TOKEN_ATTRIBUTE_NAME = 'refreshToken'
 
 const THEME_ATTRIBUTE_NAME = 'themeMode'
+
 class RestService {
 
-    executeJwtAuthenticationService(username, password) {
-        return axios.post(`${AUTH_URL}/login`, {
-            username,
-            password
+    login(username, password): Promise<AxiosResponse> {
+        return axios.post(`${API_URL}/auth/login`,
+            {
+                "login": username,
+                "password": password
+            }
+        )
+            .then((r) => {
+                this.registerSuccessfulLoginForJwt(r.data["accessToken"], r.data["refreshToken"], username)
+                return r
+            })
+    }
+
+    tryRefresh(): Promise<AxiosResponse> {
+        return axios.put(`${API_URL}/auth/refresh`,
+            {
+                "accessToken": localStorage.getItem(ACCESS_TOKEN_ATTRIBUTE_NAME),
+                "refreshToken": localStorage.getItem(REFRESH_TOKEN_ATTRIBUTE_NAME)
+            }
+        ).then((r) => {
+            this.setTokens(r.data["accessToken"], r.data["refreshToken"])
+            return r
         })
     }
 
-    executeRegisterService(values) {
-        return axios.post(`${AUTH_URL}/register`, values)
-    }
-
-    executeApiAddNew(values) {
-        return axios.post(`${API_URL}/subscription`, values)
-    }
-
-    executeApiGetAll(withStatus) {
-        return axios.get(`${API_URL}/subscription?withStatus=` + withStatus)
-    }
-
-    executeApiDelete(id) {
-        return axios.delete(`${API_URL}/subscription/` + id)
-    }
-
-    executeApiUserInfo() {
-        return axios.get(`${API_URL}/user`)
-    }
-
-    executeSearch(type, value) {
-        return axios.get(`${API_URL}/search?type=` + type + `&value=` + value)
-    }
-
-    executeCount() {
-        return axios.get(`${API_URL}/count`)
-    }
-
-    executeApiSaveUserInfo(values) {
-        return axios.post(`${API_URL}/user`, values)
-    }
-
-    registerSuccessfulLoginForJwt(username, token) {
+    registerSuccessfulLoginForJwt(accessToken, refreshToken, username) {
         localStorage.setItem(USER_NAME_SESSION_ATTRIBUTE_NAME, username)
-        localStorage.setItem(TOKEN_SESSION_ATTRIBUTE_NAME, token)
+        this.setTokens(accessToken, refreshToken)
+    }
+
+    setTokens(accessToken, refreshToken) {
+        console.log("setTokens")
+        localStorage.setItem(ACCESS_TOKEN_ATTRIBUTE_NAME, accessToken)
+        localStorage.setItem(REFRESH_TOKEN_ATTRIBUTE_NAME, refreshToken)
     }
 
     createJWTToken(token) {
         return 'Bearer ' + token
     }
 
+    register(form): Promise<AxiosResponse> {
+        return axios.post(`${API_URL}/auth/register`,
+            {
+                login: form.email,
+                email: form.email,
+                password: form.password,
+                firstName: form.firstName,
+                lastName: form.lastName,
+                marketing: form.marketing
+            })
+    }
+
     logout() {
         localStorage.removeItem(USER_NAME_SESSION_ATTRIBUTE_NAME);
+        localStorage.removeItem(REFRESH_TOKEN_ATTRIBUTE_NAME);
+        localStorage.removeItem(ACCESS_TOKEN_ATTRIBUTE_NAME);
         document.location.href = Paths.SIGN_IN.path
     }
 
     isUserLoggedIn() {
         let user = localStorage.getItem(USER_NAME_SESSION_ATTRIBUTE_NAME)
-        if (user === null) return false
-        return true
+        return user !== null;
     }
 
     getTheme() {
@@ -84,19 +90,22 @@ class RestService {
     }
 
     //TODO API CALL
-    changeCurrentGroup(groupId) {
+    changeCurrentGroup(groupId): Promise<AxiosResponse> {
         console.log("changeCurrentGroup group = " + groupId)
 
     }
 
     //TODO API CALL
-    deleteGroup(groupId) {
+    deleteGroup(groupId): Promise<AxiosResponse> {
         console.log("deleteGroup group = " + groupId)
     }
 
     //TODO API CALL
-    getGroups() {
+    getGroups(): Promise<AxiosResponse> {
         console.log("getGroups")
+        this.getUsers()
+            .then(r => console.log(r.data))
+            .catch(r => console.log("error: " + r))
         return [
             {
                 id: 45,
@@ -123,8 +132,13 @@ class RestService {
         ]
     }
 
+    getUsers(): Promise<AxiosResponse> {
+        console.log("Get users")
+        return axios.get(`${API_URL}/users`)
+    }
+
     //TODO API CALL
-    getOperationHistory(groupId) {
+    getOperationHistory(groupId): Promise<AxiosResponse> {
         console.log("getOperationHistory group = " + groupId)
         if (groupId == null) {
             return []
@@ -143,7 +157,7 @@ class RestService {
     }
 
     //TODO API CALL
-    getCategories(groupId) {
+    getCategories(groupId): Promise<AxiosResponse> {
         console.log("getCategories group = " + groupId)
         if (groupId == null) {
             return []
@@ -178,7 +192,7 @@ class RestService {
     }
 
     //TODO API CALL
-    getAccounts(groupId) {
+    getAccounts(groupId): Promise<AxiosResponse> {
         console.log("getAccounts group = " + groupId)
         if (groupId == null) {
             return []
@@ -215,25 +229,50 @@ class RestService {
         axios.interceptors.request.use(
             (config) => {
                 if (this.isUserLoggedIn()) {
-                    config.headers.authorization = this.createJWTToken(localStorage.getItem(TOKEN_SESSION_ATTRIBUTE_NAME))
+                    config.headers.Authorization = this.createJWTToken(localStorage.getItem(ACCESS_TOKEN_ATTRIBUTE_NAME))
                 }
                 return config
+            },
+            (error) => {
+                return Promise.reject(error);
             }
         )
         axios.interceptors.response.use(
             (response) => {
-                if (response.status !== 401) {
-
-                }
                 return response;
             },
             error => {
-                if (error.response.status === 401) {
+                if (error.config.url === API_URL + "/auth/refresh") {
                     this.logout()
+                    return Promise.reject(error)
+                } else if (error.response.status === 401 && !error?.config?._isRetry) {
+                    return this.tryRefresh()
+                        .then(() => {
+                            return axios.request({
+                                ...error.config,
+                                headers: error.config.headers.toJSON(),
+                                _isRetry: true
+                            })
+                        })
                 } else {
                     return Promise.reject(error)
                 }
             });
+    }
+
+    getErrorMessageFromResponse(response) {
+        const payload = response.data
+        if (payload.message) {
+            return payload.message
+        } else if (payload.error) {
+            return payload.error
+        } else if (payload.detail) {
+            return payload.detail
+        } else if (payload.status) {
+            return payload.status
+        }
+
+        return "Unknown error"
     }
 }
 
