@@ -3,7 +3,7 @@ import {OperationTypes} from "../model/operationTypes";
 import {Currencies} from "../model/currencies";
 import {Paths} from "../model/paths";
 
-const API_URL = process.env.REACT_APP_BACKEND_URI
+const API_URL = process.env.REACT_APP_BACKEND_URI || '/api'
 
 const USER_NAME_SESSION_ATTRIBUTE_NAME = 'authenticatedUser'
 const ACCESS_TOKEN_ATTRIBUTE_NAME = 'accessToken'
