@@ -101,7 +101,7 @@ class Sidebar extends React.Component {
     render() {
         return (
             <>
-                <AppBar position="absolute" open={this.state.open}>
+                <AppBar position="fixed" open={this.state.open}>
                     <Toolbar
                         sx={{
                             pr: '24px', // keep right padding when drawer closed

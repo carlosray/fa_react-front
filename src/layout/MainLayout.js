@@ -29,19 +29,26 @@ class MainLayout extends React.Component {
         }
 
         this.changeCurrentGroup = this.changeCurrentGroup.bind(this)
+        this.onGroupCreate = this.onGroupCreate.bind(this)
         this.setupGroupsState = this.setupGroupsState.bind(this)
         this.onDeleteGroup = this.onDeleteGroup.bind(this)
         this.onModeChanged = this.onModeChanged.bind(this)
     }
 
     setupGroupsState() {
-        const groups = RestService.getGroups();
-        const currentGroup = groups.find((g) => g.isCurrent);
-
-        this.setState({
-            currentGroup: currentGroup,
-            groups: groups
-        })
+        RestService.getGroups()
+            .then((r) => {
+                const c = RestService.getCurrentGroupId();
+                const groups = r.data;
+                let currentGroup = groups.find((g) => g.id === c);
+                if (currentGroup === undefined && groups?.length > 0) {
+                    currentGroup = groups[0];
+                }
+                this.setState({
+                    currentGroup: currentGroup,
+                    groups: groups
+                })
+            });
     }
 
     componentDidMount() {
@@ -51,18 +58,21 @@ class MainLayout extends React.Component {
         })
     }
 
-    changeCurrentGroup(group) {
-        RestService.changeCurrentGroup(group.id)
+    changeCurrentGroup(groupId) {
+        RestService.setCurrentGroupId(groupId)
         this.setupGroupsState()
-        //TODO DELETE
-        this.setState({
-            currentGroup: group
-        })
     }
 
-    onDeleteGroup(group) {
-        RestService.deleteGroup(group.id)
+    onDeleteGroup() {
         this.setupGroupsState()
+    }
+
+    onGroupCreate(groupId, setCurrent) {
+        if (setCurrent && groupId !== this.state.currentGroup?.id) {
+            RestService.setCurrentGroupId(groupId)
+        }
+        RestService.tryRefresh()
+            .then(() => this.setupGroupsState())
     }
 
     onModeChanged(theme) {
@@ -126,8 +136,11 @@ class MainLayout extends React.Component {
                                     <Route path={Paths.GROUPS.path} exact>
                                         <GroupPage currentGroup={this.state.currentGroup}
                                                    groups={this.state.groups}
+                                                   onGroupCreate={this.onGroupCreate}
                                                    onGroupChange={this.changeCurrentGroup}
-                                                   onDeleteGroup={this.onDeleteGroup}/>
+                                                   onDeleteGroup={this.onDeleteGroup}
+                                                   alert={this.props.alert}
+                                        />
                                     </Route>
                                     <Route path={Paths.SETTINGS.path} exact>
                                         <SettingsPage theme={this.state.mode} onThemeChanged={this.onModeChanged}/>

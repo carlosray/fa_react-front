@@ -1,5 +1,6 @@
 import React from "react";
-import {Box, FormControl, InputLabel, Select, TableCell, TextField} from "@mui/material";
+import {FormControl, InputLabel, Select, Switch, TableCell, TextField} from "@mui/material";
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from "@mui/material/Unstable_Grid2";
 import CommonEditTable from "../../components/CommonEditTable";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
@@ -13,37 +14,63 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
+import RestService from "../../service/RestService";
+import {Severities} from "../../model/severities";
 
 
 export default function GroupPage(props) {
 
     const [isOpenChangeAlert, setIsOpenChangeAlert] = React.useState(null) //group or null
+    const [isLoading, setIsLoading] = React.useState(false)
     const handleClickOpenChangeAlert = (group) => (event) => {
-        if (group.id !== props.currentGroup.id) {
+        if (group.id !== props.currentGroup?.id) {
             setIsOpenChangeAlert(group);
         }
     };
 
     const handleCloseChangeAlert = (isChange) => (event) => {
-        if (isChange && isOpenChangeAlert.id !== props.currentGroup.id) {
-            props.onGroupChange(fromFlatten(isOpenChangeAlert))
+        if (isChange && isOpenChangeAlert.id !== props.currentGroup?.id) {
+            props.onGroupChange(isOpenChangeAlert.id)
         }
         setIsOpenChangeAlert(null);
     };
 
     const handleSave = (group) => {
-        console.log("Group saved: " + JSON.stringify(fromFlatten(group)));
+        setIsLoading(true)
+        return RestService.createGroup(group.name, group.description, group.currency)
+            .then((r) => {
+                const response = r.data
+                props.onGroupCreate(response.id, group.setCurrent)
+                props.alert("Group created", `Group ${response.name} successfully created`, Severities.SUCCESS)
+            })
+            .catch((e) => {
+                props.alert("Failed to create group", RestService.getErrorMessageFromResponse(e.response))
+            })
+            .finally(() => {
+                setIsLoading(false)
+            })
     };
 
     const handleDelete = (group) => {
-        console.log("Group deleted: " + JSON.stringify(group));
+        setIsLoading(true)
+        RestService.deleteGroup(group.id)
+            .then((r) => {
+                props.onDeleteGroup()
+            })
+            .catch((e) => {
+                props.alert("Failed to delete group", RestService.getErrorMessageFromResponse(e.response))
+            })
+            .finally(() => {
+                setIsLoading(false)
+            })
     };
 
     const toFlatten = (g) => {
         return {
             id: g.id,
             name: g.name,
-            isCurrent: g.isCurrent,
+            description: g.description,
+            setCurrent: true,
             users: g.users,
             amount: g.balance.amount,
             currency: g.balance.currency,
@@ -55,7 +82,7 @@ export default function GroupPage(props) {
         return {
             id: g.id,
             name: g.name,
-            isCurrent: g.isCurrent,
+            description: g.description,
             users: g.users,
             balance: {
                 amount: g.amount,
@@ -69,7 +96,7 @@ export default function GroupPage(props) {
         <>
             <Grid container spacing={2}>
                 <CommonEditTable
-                    isLoading={false}
+                    isLoading={props.isLoading}
                     title={"Group"}
                     columns={[
                         <TableCell key={1}>Name</TableCell>,
@@ -92,7 +119,7 @@ export default function GroupPage(props) {
                             <TableCell align="right">
                                 <IconButton color="success" aria-label="is current"
                                             onClick={handleClickOpenChangeAlert(g)}>
-                                    {g.id === props.currentGroup.id ? (
+                                    {g.id === props.currentGroup?.id ? (
                                         <RadioButtonCheckedIcon/>
                                     ) : (
                                         <RadioButtonUncheckedIcon/>
@@ -102,46 +129,58 @@ export default function GroupPage(props) {
                         </>
                     )}
                     form={(values, handleChange) => (
-                        <Box
-                            component="form"
-                            sx={{
-                                '& > :not(style)': {m: 1, width: '25ch'},
-                            }}
-                            noValidate
-                            autoComplete="off"
-                        >
-                            <TextField id="name"
-                                       label="Name"
-                                       variant="standard"
-                                       value={values?.name ? values?.name : ''}
-                                       onChange={handleChange('name')}/>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField id="name"
+                                           label="Name"
+                                           variant="standard"
+                                           value={values?.name ? values?.name : ''}
+                                           onChange={handleChange('name')}/>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField id="description"
+                                           label="Description"
+                                           variant="standard"
+                                           value={values?.description ? values?.description : ''}
+                                           onChange={handleChange('description')}/>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="users-select-label">Users</InputLabel>
+                                    <Select
+                                        labelId="users-select-label"
+                                        id="users-select"
+                                        label="Users"
+                                        onChange={handleChange('users')}
+                                        disabled
+                                        value={''}
+                                        variant="standard"
+                                    >
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth variant="standard">
+                                    <InputLabel id="demo-simple-select-label">Currency</InputLabel>
+                                    <Select
+                                        labelId="demo-simple-select-label"
+                                        id="demo-simple-select"
+                                        value={values?.currency ? values.currency : ''}
+                                        label="Currency"
+                                        onChange={handleChange('currency')}
+                                    >
+                                        {AvailableCurrencies.map((c) => <MenuItem key={c}
+                                                                                  value={c}>{c}</MenuItem>)}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6} sx={{mt: 3}}>
+                                <FormControlLabel
+                                    control={<Switch defaultChecked onChange={handleChange('setCurrent')}/>}
+                                    label="Set current"/>
 
-                            <FormControl fullWidth>
-                                <InputLabel id="users-select-label">Users</InputLabel>
-                                <Select
-                                    labelId="users-select-label"
-                                    id="users-select"
-                                    label="Users"
-                                    onChange={handleChange('users')}
-                                    disabled
-                                    value={''}
-                                    variant="standard"
-                                >
-                                </Select>
-                            </FormControl>
-                            <FormControl fullWidth variant="standard">
-                                <InputLabel id="demo-simple-select-label">Currency</InputLabel>
-                                <Select
-                                    labelId="demo-simple-select-label"
-                                    id="demo-simple-select"
-                                    value={values?.currency ? values.currency : ''}
-                                    label="Currency"
-                                    onChange={handleChange('currency')}
-                                >
-                                    {AvailableCurrencies.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                                </Select>
-                            </FormControl>
-                        </Box>
+                            </Grid>
+                        </Grid>
                     )}
                     onDelete={handleDelete}
                     onSave={handleSave}

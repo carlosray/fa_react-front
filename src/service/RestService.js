@@ -8,6 +8,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URI || '/api'
 const USER_NAME_SESSION_ATTRIBUTE_NAME = 'authenticatedUser'
 const ACCESS_TOKEN_ATTRIBUTE_NAME = 'accessToken'
 const REFRESH_TOKEN_ATTRIBUTE_NAME = 'refreshToken'
+const CURRENT_GROUP = 'currentGroup'
 
 const THEME_ATTRIBUTE_NAME = 'themeMode'
 
@@ -90,51 +91,34 @@ class RestService {
     }
 
     //TODO API CALL
-    changeCurrentGroup(groupId): Promise<AxiosResponse> {
-        console.log("changeCurrentGroup group = " + groupId)
-
-    }
-
-    //TODO API CALL
     deleteGroup(groupId): Promise<AxiosResponse> {
-        console.log("deleteGroup group = " + groupId)
+        console.log("deleteGroup")
+        return axios.delete(`${API_URL}/groups/${groupId}`)
     }
 
-    //TODO API CALL
+    createGroup(name, description, currency): Promise<AxiosResponse> {
+        console.log("createGroup")
+        return axios.post(`${API_URL}/groups`,
+            {
+                name: name,
+                description: description,
+                currency: currency
+            })
+    }
+
     getGroups(): Promise<AxiosResponse> {
         console.log("getGroups")
-        this.getUsers()
-            .then(r => console.log(r.data))
-            .catch(r => console.log("error: " + r))
-        return [
-            {
-                id: 45,
-                name: 'Family',
-                isCurrent: true,
-                users: ["ivanov"],
-                balance: {
-                    amount: Math.floor(Math.random() * 400),
-                    currency: 'USD',
-                    lastUpdate: '2022-12-12T16:22:00Z'
-                }
-            },
-            {
-                id: 46,
-                name: 'Private',
-                isCurrent: false,
-                users: ["ivanov", "petrov"],
-                balance: {
-                    amount: Math.floor(Math.random() * 400),
-                    currency: 'GEL',
-                    lastUpdate: '2022-12-12T16:22:00Z'
-                }
-            }
-        ]
+        return axios.get(`${API_URL}/groups`)
     }
 
-    getUsers(): Promise<AxiosResponse> {
-        console.log("Get users")
-        return axios.get(`${API_URL}/users`)
+    getCurrentGroupId() {
+        console.log("getCurrentGroupId")
+        return localStorage.getItem(CURRENT_GROUP)
+    }
+
+    setCurrentGroupId(groupId) {
+        console.log("setCurrentGroupId")
+        return localStorage.setItem(CURRENT_GROUP, groupId)
     }
 
     //TODO API CALL
