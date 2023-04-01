@@ -78,6 +78,10 @@ class ValidatorService {
         return new1 === new2;
     }
 
+    validateSpecified(field: string, value: string) {
+        return value === undefined || value === null || value.length < 1 ? [`${field} must be specified`] : []
+    }
+
 }
 
 export default new ValidatorService()

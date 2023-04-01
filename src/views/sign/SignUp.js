@@ -75,8 +75,8 @@ export default function SignUp(props) {
                     })
 
                 })
-                .catch(r => {
-                    props.alert("Failed to register", RestService.getErrorMessageFromResponse(r.response))
+                .catch(e => {
+                    props.alert("Failed to register", RestService.getErrorMessage(e))
                 })
         }
     };

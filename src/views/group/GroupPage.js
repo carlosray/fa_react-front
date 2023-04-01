@@ -16,6 +16,7 @@ import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import RestService from "../../service/RestService";
 import {Severities} from "../../model/severities";
+import ValidatorService from "../../service/ValidatorService";
 
 
 export default function GroupPage(props) {
@@ -37,14 +38,14 @@ export default function GroupPage(props) {
 
     const handleSave = (group) => {
         setIsLoading(true)
-        return RestService.createGroup(group.name, group.description, group.currency)
+        RestService.createGroup(group.name, group.description, group.currency)
             .then((r) => {
                 const response = r.data
                 props.onGroupCreate(response.id, group.setCurrent)
                 props.alert("Group created", `Group ${response.name} successfully created`, Severities.SUCCESS)
             })
             .catch((e) => {
-                props.alert("Failed to create group", RestService.getErrorMessageFromResponse(e.response))
+                props.alert("Failed to create group", RestService.getErrorMessage(e))
             })
             .finally(() => {
                 setIsLoading(false)
@@ -56,14 +57,29 @@ export default function GroupPage(props) {
         RestService.deleteGroup(group.id)
             .then((r) => {
                 props.onDeleteGroup()
+                props.alert("Group deleted", `Group ${group.name} deleted`, Severities.INFO)
             })
             .catch((e) => {
-                props.alert("Failed to delete group", RestService.getErrorMessageFromResponse(e.response))
+                props.alert("Failed to delete group", RestService.getErrorMessage(e))
             })
             .finally(() => {
                 setIsLoading(false)
             })
     };
+
+    const validate = (field, value) => {
+        console.log("validate group called")
+        switch (field) {
+            case 'name':
+                return ValidatorService.validateSpecified(field, value);
+            case 'description':
+                return ValidatorService.validateSpecified(field, value);
+            case 'currency':
+                return ValidatorService.validateSpecified(field, value);
+            default:
+                return [];
+        }
+    }
 
     const toFlatten = (g) => {
         return {
@@ -96,7 +112,7 @@ export default function GroupPage(props) {
         <>
             <Grid container spacing={2}>
                 <CommonEditTable
-                    isLoading={props.isLoading}
+                    isLoading={isLoading}
                     title={"Group"}
                     columns={[
                         <TableCell key={1}>Name</TableCell>,
@@ -128,12 +144,14 @@ export default function GroupPage(props) {
                             </TableCell>
                         </>
                     )}
-                    form={(values, handleChange) => (
+                    form={(values, errors, handleChange) => (
                         <Grid container spacing={3}>
                             <Grid item xs={12} sm={6}>
                                 <TextField id="name"
                                            label="Name"
                                            variant="standard"
+                                           error={errors?.name && errors.name.length !== 0}
+                                           helperText={errors?.name?.join('. ')}
                                            value={values?.name ? values?.name : ''}
                                            onChange={handleChange('name')}/>
                             </Grid>
@@ -141,6 +159,8 @@ export default function GroupPage(props) {
                                 <TextField id="description"
                                            label="Description"
                                            variant="standard"
+                                           error={errors?.description && errors.description.length !== 0}
+                                           helperText={errors?.description?.join('. ')}
                                            value={values?.description ? values?.description : ''}
                                            onChange={handleChange('description')}/>
                             </Grid>
@@ -166,6 +186,8 @@ export default function GroupPage(props) {
                                         labelId="demo-simple-select-label"
                                         id="demo-simple-select"
                                         value={values?.currency ? values.currency : ''}
+                                        error={errors?.currency && errors.currency.length !== 0}
+                                        helperText={errors?.currency?.join('. ')}
                                         label="Currency"
                                         onChange={handleChange('currency')}
                                     >
@@ -184,6 +206,7 @@ export default function GroupPage(props) {
                     )}
                     onDelete={handleDelete}
                     onSave={handleSave}
+                    validate={validate}
                 />
                 <Dialog
                     open={isOpenChangeAlert !== null}

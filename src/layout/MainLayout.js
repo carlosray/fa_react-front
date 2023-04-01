@@ -71,8 +71,6 @@ class MainLayout extends React.Component {
         if (setCurrent && groupId !== this.state.currentGroup?.id) {
             RestService.setCurrentGroupId(groupId)
         }
-        RestService.tryRefresh()
-            .then(() => this.setupGroupsState())
     }
 
     onModeChanged(theme) {
@@ -115,22 +113,22 @@ class MainLayout extends React.Component {
                                     </Route>
                                     <Route path={Paths.MAIN.path} exact>
                                         {this.state.currentGroup
-                                            ? <MainPage group={this.state.currentGroup}/>
+                                            ? <MainPage group={this.state.currentGroup} alert={this.props.alert}/>
                                             : <NoGroupTypography/>}
                                     </Route>
                                     <Route path={Paths.STATISTIC.path} exact>
                                         {this.state.currentGroup
-                                            ? <StatisticPage group={this.state.currentGroup}/>
+                                            ? <StatisticPage group={this.state.currentGroup} alert={this.props.alert}/>
                                             : <NoGroupTypography/>}
                                     </Route>
                                     <Route path={Paths.CATEGORIES.path} exact>
                                         {this.state.currentGroup
-                                            ? <CategoryPage group={this.state.currentGroup}/>
+                                            ? <CategoryPage group={this.state.currentGroup} alert={this.props.alert}/>
                                             : <NoGroupTypography/>}
                                     </Route>
                                     <Route path={Paths.ACCOUNTS.path} exact>
                                         {this.state.currentGroup
-                                            ? <AccountsPage group={this.state.currentGroup}/>
+                                            ? <AccountsPage group={this.state.currentGroup} alert={this.props.alert}/>
                                             : <NoGroupTypography/>}
                                     </Route>
                                     <Route path={Paths.GROUPS.path} exact>

@@ -7,13 +7,17 @@ import Title from "./Title";
 export default function CommonEditForm(props) {
 
     const [values, setValues] = React.useState(props.initialObj);
+    const [errors, setErrors] = React.useState({})
 
     useEffect(() => {
         setValues(props.initialObj)
     }, [props.initialObj]);
 
     const handleChange = (prop) => (event) => {
+        const validation = props.validate ? props.validate(prop, event.target.value) : []
+
         setValues({...values, [prop]: event.target.value});
+        setErrors({...errors, [prop]: validation});
     };
 
     const handleSave = () => {
@@ -33,7 +37,7 @@ export default function CommonEditForm(props) {
                         : `New ${props.title.toLowerCase()}`}
                 </Title>
                 <Grid xs={12}>
-                    {props.form(values, handleChange)}
+                    {props.form(values, errors, handleChange)}
                     <Box>
                         <Button onClick={handleCancel} sx={{mt: 3, ml: 1}}>
                             Cancel

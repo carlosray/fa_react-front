@@ -64,8 +64,8 @@ export default function SignIn(props) {
         if (emailValidation.length === 0 && pwdValidation.length === 0) {
             RestService.login(form.email, form.password)
                 .then(() => setLoggedIn(true))
-                .catch((r) => {
-                    props.alert("Failed to login", RestService.getErrorMessageFromResponse(r.response))
+                .catch((e) => {
+                    props.alert("Failed to login", RestService.getErrorMessage(e))
                 })
         }
     };

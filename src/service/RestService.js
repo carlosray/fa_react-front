@@ -102,7 +102,8 @@ class RestService {
             {
                 name: name,
                 description: description,
-                currency: currency
+                currency: currency,
+                users: []
             })
     }
 
@@ -229,7 +230,7 @@ class RestService {
                 if (error.config.url === API_URL + "/auth/refresh") {
                     this.logout()
                     return Promise.reject(error)
-                } else if (error.response.status === 401 && !error?.config?._isRetry) {
+                } else if (error.response && error.response.status === 401 && !error?.config?._isRetry) {
                     return this.tryRefresh()
                         .then(() => {
                             return axios.request({
@@ -244,18 +245,23 @@ class RestService {
             });
     }
 
-    getErrorMessageFromResponse(response) {
-        const payload = response.data
-        if (payload.message) {
-            return payload.message
-        } else if (payload.error) {
-            return payload.error
-        } else if (payload.detail) {
-            return payload.detail
-        } else if (payload.status) {
-            return payload.status
+    getErrorMessage(error) {
+        if (error) {
+            if (error.response && error.response.data) {
+                const payload = error.response.data
+                if (payload.message) {
+                    return payload.message
+                } else if (payload.error) {
+                    return payload.error
+                } else if (payload.detail) {
+                    return payload.detail
+                } else if (payload.status) {
+                    return payload.status
+                }
+            } else if (error.message) {
+                return error.message
+            }
         }
-
         return "Unknown error"
     }
 }

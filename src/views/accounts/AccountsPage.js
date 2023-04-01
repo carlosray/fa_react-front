@@ -73,7 +73,7 @@ export default function AccountsPage(props) {
                             </TableCell>
                         </>
                     )}
-                    form={(values, handleChange) => (
+                    form={(values, errors, handleChange) => (
                         <Box
                             component="form"
                             sx={{

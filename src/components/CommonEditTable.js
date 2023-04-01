@@ -25,7 +25,6 @@ import CommonEditForm from "./CommonEditForm";
 export default function CommonEditTable(props) {
 
     const [isCreating, setIsCreating] = React.useState(false)
-    const [loader, setLoader] = React.useState(false)
     const [isEdit, setIsEdit] = React.useState(null) //object or null
     const [isOpenDeleteAlert, setIsOpenDeleteAlert] = React.useState(null) //object or null
 
@@ -53,9 +52,7 @@ export default function CommonEditTable(props) {
     //save group
     const handleSave = (obj) => {
         props.onSave(obj)
-            .then(() => {
-                setIsCreating(false)
-            })
+        setIsCreating(false)
     };
 
     const handleCloseSave = (obj) => {
@@ -158,6 +155,7 @@ export default function CommonEditTable(props) {
                             <CommonEditForm initialObj={isEdit}
                                             title={props.title}
                                             form={props.form}
+                                            validate={props.validate}
                                             onSave={handleSave}
                                             onCancel={handleCloseSave}/>
                         </Grid>

@@ -47,7 +47,7 @@ export default function CategoryPage(props) {
                             </TableCell>
                         </>
                     )}
-                    form={(values, handleChange) => (
+                    form={(values, errors, handleChange) => (
                         <Box
                             component="form"
                             sx={{
