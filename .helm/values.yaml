@@ -19,21 +19,21 @@ container:
 ingress:
   enabled: true
   hosts:
-    - host: fa.ipvz.ml
+    - host: fa.ipvz.space
       paths:
         - path: /
           pathType: Prefix
   tls:
     - hosts:
-        - fa.ipvz.ml
+        - fa.ipvz.space
 
 yc:
   authorizedKey: <FILL>
-  certId: <FILL>
+  certId: fpqdoqijs939pqhbsaql
 
 env:
   - name: REACT_APP_BACKEND_URI
-    value: "https://fa.ipvz.ml/api"
+    value: "https://fa.ipvz.space/api"
 
 config:
   mountPath: /etc/config
