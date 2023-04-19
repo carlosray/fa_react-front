@@ -1,5 +1,5 @@
 export const Translations = {
-    IN: 'Income',
-    OUT: 'Expense',
+    INCOME: 'Income',
+    EXPENSE: 'Expense',
     TRANSFER: 'Transfer'
 }

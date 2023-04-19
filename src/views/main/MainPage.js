@@ -1,5 +1,5 @@
 import React, {useEffect} from "react";
-import {CircularProgress, Paper, Step, StepLabel, Stepper} from "@mui/material";
+import {Backdrop, CircularProgress, Paper, Step, StepLabel, Stepper} from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
@@ -31,6 +31,7 @@ export default function MainPage(props) {
     const [categories, setCategories] = React.useState([]);
     const [accounts, setAccounts] = React.useState([]);
     const [isCreating, setIsCreating] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const [errors, setErrors] = React.useState({
         account: [],
@@ -55,19 +56,45 @@ export default function MainPage(props) {
 
     useEffect(() => {
         if (props.group) {
-            const returnedCategories = RestService.getCategories(props.group.id);
-            const returnedAccounts = RestService.getAccounts(props.group.id);
+            setIsLoading(true)
+            let categoriesLoading = true
+            let accountsLoading = true
+            RestService.getCategories(props.group.id)
+                .then(r => {
+                    const returnedCategories = r.data
+                    setCategories(returnedCategories)
+                    setValues({
+                        ...values,
+                        category: returnedCategories.find((c) => c.type === values.type),
+                    })
+                })
+                .catch((e) => {
+                    props.alert("Failed to load categories", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    categoriesLoading = false
+                    setIsLoading(categoriesLoading || accountsLoading)
+                })
 
-            setCategories(returnedCategories)
-            setAccounts(returnedAccounts)
-            setValues({
-                ...values,
-                account: returnedAccounts[0],
-                amount: returnedAccounts[0] ? returnedAccounts[0].balance.amount < 100 ? returnedAccounts[0].balance.amount : 100 : 0,
-                category: returnedCategories.find((c) => c.type === values.type),
-                fromAccount: returnedAccounts[0],
-                toAccount: returnedAccounts[1],
-            })
+            RestService.getAccounts(props.group.id)
+                .then(r => {
+                    const returnedAccounts = r.data
+                    setAccounts(returnedAccounts)
+                    setValues({
+                        ...values,
+                        account: returnedAccounts[0],
+                        amount: returnedAccounts[0] ? returnedAccounts[0].balance.amount < 100 ? returnedAccounts[0].balance.amount : 100 : 0,
+                        fromAccount: returnedAccounts[0],
+                        toAccount: returnedAccounts[1],
+                    })
+                })
+                .catch((e) => {
+                    props.alert("Failed to load accounts", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    accountsLoading = false
+                    setIsLoading(categoriesLoading || accountsLoading)
+                });
         }
     }, [props.group]);
 
@@ -221,6 +248,12 @@ export default function MainPage(props) {
 
     return (
         <>
+            <Backdrop
+                sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
+                open={isLoading}
+            >
+                <CircularProgress color="inherit"/>
+            </Backdrop>
             <Grid container spacing={2}>
                 <Grid xs>
                     <Paper variant="outlined" sx={{my: {xs: 3, md: 6}, p: {xs: 2, md: 3}}}>

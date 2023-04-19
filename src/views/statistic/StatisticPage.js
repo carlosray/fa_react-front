@@ -1,5 +1,5 @@
 import React, {useEffect} from "react";
-import {Paper} from "@mui/material";
+import {Backdrop, CircularProgress, Paper} from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import OperationsHistory from "./sub/OperationsHistory";
 import Chart from "./sub/Chart";
@@ -10,19 +10,49 @@ import RestService from "../../service/RestService";
 export default function StatisticPage(props) {
     const [accounts, setAccounts] = React.useState();
     const [categories, setCategories] = React.useState();
+    const [isLoading, setIsLoading] = React.useState(false);
 
     useEffect(() => {
         if (props.group) {
-            const returnedCategories = RestService.getCategories(props.group.id);
-            const returnedAccounts = RestService.getAccounts(props.group.id);
+            setIsLoading(true)
+            let categoriesLoading = true
+            let accountsLoading = true
+            RestService.getCategories(props.group.id)
+                .then(r => {
+                    const returnedCategories = r.data
+                    setCategories(returnedCategories)
+                })
+                .catch((e) => {
+                    props.alert("Failed to load categories", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    categoriesLoading = false
+                    setIsLoading(categoriesLoading || accountsLoading)
+                })
 
-            setCategories(returnedCategories)
-            setAccounts(returnedAccounts)
+            RestService.getAccounts(props.group.id)
+                .then(r => {
+                    const returnedAccounts = r.data
+                    setAccounts(returnedAccounts)
+                })
+                .catch((e) => {
+                    props.alert("Failed to load accounts", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    accountsLoading = false
+                    setIsLoading(categoriesLoading || accountsLoading)
+                });
         }
     }, [props.group]);
 
     return (
         <>
+            <Backdrop
+                sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
+                open={isLoading}
+            >
+                <CircularProgress color="inherit"/>
+            </Backdrop>
             <Grid container spacing={3}>
                 <Grid item xs={12} md={5} lg={4}>
                     <Paper

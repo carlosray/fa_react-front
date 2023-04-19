@@ -1,5 +1,5 @@
 export const OperationTypes = {
-    IN: 'IN',
-    OUT: 'OUT',
+    IN: 'INCOME',
+    OUT: 'EXPENSE',
     TRANSFER: 'TRANSFER'
 }

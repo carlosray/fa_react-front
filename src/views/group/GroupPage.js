@@ -1,5 +1,5 @@
 import React from "react";
-import {FormControl, InputLabel, Select, Switch, TableCell, TextField} from "@mui/material";
+import {Backdrop, CircularProgress, FormControl, InputLabel, Select, Switch, TableCell, TextField} from "@mui/material";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from "@mui/material/Unstable_Grid2";
 import CommonEditTable from "../../components/CommonEditTable";
@@ -38,18 +38,33 @@ export default function GroupPage(props) {
 
     const handleSave = (group) => {
         setIsLoading(true)
-        RestService.createGroup(group.name, group.description, group.currency)
-            .then((r) => {
-                const response = r.data
-                props.onGroupCreate(response.id, group.setCurrent)
-                props.alert("Group created", `Group ${response.name} successfully created`, Severities.SUCCESS)
-            })
-            .catch((e) => {
-                props.alert("Failed to create group", RestService.getErrorMessage(e))
-            })
-            .finally(() => {
-                setIsLoading(false)
-            })
+        if (group.id) {
+            RestService.updateGroup(group.id, group.name, group.description, group.currency)
+                .then((r) => {
+                    const response = r.data
+                    props.onGroupUpdate(response, group.setCurrent)
+                    props.alert("Group updated", `Group ${response.name} successfully updated`, Severities.SUCCESS)
+                })
+                .catch((e) => {
+                    props.alert("Failed to update group", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                })
+        } else {
+            RestService.createGroup(group.name, group.description, group.currency)
+                .then((r) => {
+                    const response = r.data
+                    props.onGroupCreate(response, group.setCurrent)
+                    props.alert("Group created", `Group ${response.name} successfully created`, Severities.SUCCESS)
+                })
+                .catch((e) => {
+                    props.alert("Failed to create group", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                })
+        }
     };
 
     const handleDelete = (group) => {
@@ -112,7 +127,7 @@ export default function GroupPage(props) {
         <>
             <Grid container spacing={2}>
                 <CommonEditTable
-                    isLoading={isLoading}
+                    isLoading={isLoading || props.isLoading}
                     title={"Group"}
                     columns={[
                         <TableCell key={1}>Name</TableCell>,

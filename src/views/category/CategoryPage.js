@@ -6,31 +6,90 @@ import RestService from "../../service/RestService";
 import I18n from "../../i18n/I18n";
 import MenuItem from "@mui/material/MenuItem";
 import {OperationTypes} from "../../model/operationTypes";
+import {Severities} from "../../model/severities";
 
 
 export default function CategoryPage(props) {
     const [categories, setCategories] = React.useState([]);
+    const [isLoading, setIsLoading] = React.useState(false)
 
     useEffect(() => {
         if (props.group) {
-            const returnedCategories = RestService.getCategories(props.group.id);
-            setCategories(returnedCategories)
+            setIsLoading(true)
+            RestService.getCategories(props.group.id)
+                .then(r => {
+                    setCategories(r.data)
+                })
+                .catch((e) => {
+                    props.alert("Failed to load categories", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                });
         }
     }, [props.group]);
 
     const handleSave = (category) => {
-        console.log("Category saved: " + JSON.stringify(category));
+        if (category.id) {
+            setIsLoading(true)
+            RestService.updateCategory(props.group.id, category.id, category.name, category.type)
+                .then(r => {
+                    const newElement = r.data
+                    for (let i = 0; i < categories.length; i++) {
+                        if (categories[i].id == newElement.id) {
+                            categories[i] = newElement
+                        }
+                    }
+                    props.alert("Category updated", `Category ${category.name} updated`, Severities.INFO)
+                })
+                .catch((e) => {
+                    props.alert("Failed to update category", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                })
+        } else {
+            setIsLoading(true)
+            RestService.createCategory(props.group.id, category.name, category.type)
+                .then(r => {
+                    const joined = categories.concat(r.data);
+                    setCategories(joined)
+                    props.alert("Category created", `Category ${category.name} created`, Severities.INFO)
+                })
+                .catch((e) => {
+                    props.alert("Failed to create category", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                })
+        }
     };
 
     const handleDelete = (category) => {
-        console.log("Category deleted: " + JSON.stringify(category));
+        setIsLoading(true)
+        RestService.deleteCategory(props.group.id, category.id)
+            .then((r) => {
+                const index = categories.indexOf(category);
+                if (index > -1) {
+                    const n = categories
+                    n.splice(index, 1);
+                    setCategories(n)
+                    props.alert("Category deleted", `Category ${category.name} deleted`, Severities.INFO)
+                }
+            })
+            .catch((e) => {
+                props.alert("Failed to delete category", RestService.getErrorMessage(e))
+            })
+            .finally(() => {
+                setIsLoading(false)
+            })
     };
 
     return (
         <>
             <Grid container spacing={2}>
                 <CommonEditTable
-                    isLoading={false}
+                    isLoading={isLoading}
                     title={"Category"}
                     columns={[
                         <TableCell key={1}>Name</TableCell>,

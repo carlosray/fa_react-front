@@ -1,29 +1,89 @@
 import React, {useEffect} from "react";
-import {Box, FormControl, InputLabel, Select, TableCell, TextField} from "@mui/material";
+import {Backdrop, Box, CircularProgress, FormControl, InputLabel, Select, TableCell, TextField} from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import CommonEditTable from "../../components/CommonEditTable";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import {AvailableCurrencies, cIcons, Currencies} from "../../model/currencies";
 import MenuItem from "@mui/material/MenuItem";
 import RestService from "../../service/RestService";
+import {Severities} from "../../model/severities";
 
 
 export default function AccountsPage(props) {
     const [accounts, setAccounts] = React.useState([])
+    const [isLoading, setIsLoading] = React.useState(false);
 
     useEffect(() => {
         if (props.group) {
-            const returnedAccounts = RestService.getAccounts(props.group.id);
-            setAccounts(returnedAccounts)
+            setIsLoading(true)
+            RestService.getAccounts(props.group.id)
+                .then(r => {
+                    const returnedAccounts = r.data
+                    setAccounts(returnedAccounts.map(toFlatten))
+                })
+                .catch((e) => {
+                    props.alert("Failed to load accounts", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                });
         }
     }, [props.group]);
 
     const handleSave = (account) => {
-        console.log("Account saved: " + JSON.stringify(fromFlatten(account)));
+        if (account.id) {
+            setIsLoading(true)
+            RestService.updateAccount(props.group.id, account.id, account.name, account.currency)
+                .then(r => {
+                    const newElement = r.data
+                    for (let i = 0; i < accounts.length; i++) {
+                        if (accounts[i].id == newElement.id) {
+                            accounts[i] = toFlatten(newElement)
+                        }
+                    }
+                    props.alert("Account updated", `Account ${account.name} updated`, Severities.INFO)
+                })
+                .catch((e) => {
+                    props.alert("Failed to update account", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                })
+        } else {
+            setIsLoading(true)
+            RestService.createAccount(props.group.id, account.name, account.currency)
+                .then(r => {
+                    const joined = accounts.concat(toFlatten(r.data));
+                    setAccounts(joined)
+                    props.alert("Account created", `Account ${account.name} created`, Severities.INFO)
+                })
+                .catch((e) => {
+                    props.alert("Failed to create account", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
+                })
+        }
     };
 
     const handleDelete = (account) => {
-        console.log("Account deleted: " + JSON.stringify(account));
+        setIsLoading(true)
+        RestService.deleteAccount(props.group.id, account.id)
+            .then((r) => {
+                const index = accounts.indexOf(account);
+                if (index > -1) {
+                    const n = accounts
+                    n.splice(index, 1);
+                    setAccounts(n)
+                    props.alert("Account deleted", `Account ${account.name} deleted`, Severities.INFO)
+                }
+            })
+            .catch((e) => {
+                props.alert("Failed to delete account", RestService.getErrorMessage(e))
+            })
+            .finally(() => {
+                setIsLoading(false)
+            })
     };
 
     const toFlatten = (a) => {
@@ -52,14 +112,14 @@ export default function AccountsPage(props) {
         <>
             <Grid container spacing={2}>
                 <CommonEditTable
-                    isLoading={false}
+                    isLoading={isLoading}
                     title={"Account"}
                     columns={[
                         <TableCell key={1}>Name</TableCell>,
                         <TableCell key={2} align="right">Balance</TableCell>,
                         <TableCell key={3} align="right">Currency</TableCell>
                     ]}
-                    values={accounts.map(toFlatten)}
+                    values={accounts}
                     row={(v) => (
                         <>
                             <TableCell component="th" scope="row">

@@ -66,6 +66,7 @@ const GroupTitle = (props) =>
         <CircularProgress color="inherit" size={22}/>)}</>
 
 const OPEN_SIDEBAR = "open_sidebar"
+
 class Sidebar extends React.Component {
     constructor(props, context) {
         super(props, context);
@@ -89,13 +90,10 @@ class Sidebar extends React.Component {
     };
 
     onUpdateClick = () => {
-        this.setState({refresh: true});
-        //TODO REMOVE TIMEOUT
-        setTimeout(() => {
-            this.props.onUpdateClick()
-            this.setState({refresh: false})
-        }, 1000)
-
+        Promise.resolve()
+            .then(() => this.setState({refresh: true}))
+            .then(() => this.props.onUpdateClick())
+            .finally(() => this.setState({refresh: false}))
     };
 
     render() {

@@ -90,9 +90,7 @@ class RestService {
         localStorage.setItem(THEME_ATTRIBUTE_NAME, theme)
     }
 
-    //TODO API CALL
     deleteGroup(groupId): Promise<AxiosResponse> {
-        console.log("deleteGroup")
         return axios.delete(`${API_URL}/groups/${groupId}`)
     }
 
@@ -100,6 +98,18 @@ class RestService {
         console.log("createGroup")
         return axios.post(`${API_URL}/groups`,
             {
+                name: name,
+                description: description,
+                currency: currency,
+                users: []
+            })
+    }
+
+    updateGroup(id, name, description, currency): Promise<AxiosResponse> {
+        console.log("updateGroup")
+        return axios.put(`${API_URL}/groups`,
+            {
+                id: id,
                 name: name,
                 description: description,
                 currency: currency,
@@ -141,67 +151,66 @@ class RestService {
         ];
     }
 
-    //TODO API CALL
     getCategories(groupId): Promise<AxiosResponse> {
         console.log("getCategories group = " + groupId)
-        if (groupId == null) {
-            return []
-        }
-        return [
-            {
-                id: 10,
-                name: "Food",
-                type: OperationTypes.OUT
-            },
-            {
-                id: 12,
-                name: "Restaurant",
-                type: OperationTypes.OUT
-            },
-            {
-                id: 13,
-                name: "House",
-                type: OperationTypes.OUT
-            },
-            {
-                id: 14,
-                name: "Salary",
-                type: OperationTypes.IN
-            },
-            {
-                id: 15,
-                name: "Investment",
-                type: OperationTypes.IN
-            },
-        ]
+        return axios.get(`${API_URL}/categories/group/${groupId}`)
     }
 
-    //TODO API CALL
+    createCategory(groupId, name, type): Promise<AxiosResponse> {
+        console.log("createCategory group = " + groupId)
+        return axios.post(`${API_URL}/categories/group/${groupId}`,
+            {
+                "name": name,
+                "type": type
+            }
+        )
+    }
+
+    updateCategory(groupId, id, name, type): Promise<AxiosResponse> {
+        console.log("updateCategory group = " + groupId)
+        return axios.put(`${API_URL}/categories/group/${groupId}`,
+            {
+                "id": id,
+                "name": name,
+                "type": type
+            }
+        )
+    }
+
+    deleteCategory(groupId, categoryId): Promise<AxiosResponse> {
+        console.log("deleteCategory group = " + groupId + " category = " + categoryId)
+        return axios.delete(`${API_URL}/categories/group/${groupId}/${categoryId}`)
+    }
+
     getAccounts(groupId): Promise<AxiosResponse> {
         console.log("getAccounts group = " + groupId)
-        if (groupId == null) {
-            return []
-        }
-        return [
+        return axios.get(`${API_URL}/accounts/group/${groupId}`)
+    }
+
+    deleteAccount(groupId, accountId): Promise<AxiosResponse> {
+        console.log("deleteAccount group = " + groupId + " account = " + accountId)
+        return axios.delete(`${API_URL}/accounts/group/${groupId}/${accountId}`)
+    }
+
+    createAccount(groupId, name, currency): Promise<AxiosResponse> {
+        console.log("createAccount group = " + groupId)
+        return axios.post(`${API_URL}/accounts/group/${groupId}`,
             {
-                id: 20,
-                name: "Cash",
-                balance: {
-                    amount: Math.floor(Math.random() * 400),
-                    currency: 'GEL',
-                    lastUpdate: '2022-12-01T13:14:00Z'
-                }
-            },
-            {
-                id: 23,
-                name: "Card",
-                balance: {
-                    amount: Math.floor(Math.random() * 400),
-                    currency: 'USD',
-                    lastUpdate: '2022-12-12T16:22:00Z'
-                }
+                "name": name,
+                "currency": currency
             }
-        ]
+        )
+    }
+
+    updateAccount(groupId, id, name, currency): Promise<AxiosResponse> {
+        console.log("updateAccount group = " + groupId)
+        return axios.put(`${API_URL}/categories/group/${groupId}`,
+            {
+                "id": id,
+                "name": name,
+                "currency": currency
+            }
+        )
     }
 
     getLoggedInUserName() {

@@ -49,10 +49,11 @@ export default function CommonEditTable(props) {
         }
     };
 
-    //save group
+    //save
     const handleSave = (obj) => {
         props.onSave(obj)
-        setIsCreating(false)
+        setIsCreating(null)
+        setIsEdit(null)
     };
 
     const handleCloseSave = (obj) => {
@@ -97,7 +98,7 @@ export default function CommonEditTable(props) {
                                         <TableCell align="right">
                                             <IconButton color="primary" aria-label="edit group"
                                                         onClick={handleClickEdit(v)}>
-                                                {isEdit?.id === v.id ? (<DoDisturbIcon/>) : (<EditIcon/>)}
+                                                {isEdit && isEdit?.id === v.id ? (<DoDisturbIcon/>) : (<EditIcon/>)}
                                             </IconButton>
                                         </TableCell>
                                         <TableCell align="right">

@@ -25,30 +25,53 @@ class MainLayout extends React.Component {
         this.state = {
             currentGroup: '',
             groups: [],
-            mode: 'light'
+            mode: 'light',
+            groupsIsLoading: false
         }
 
         this.changeCurrentGroup = this.changeCurrentGroup.bind(this)
         this.onGroupCreate = this.onGroupCreate.bind(this)
+        this.onGroupUpdate = this.onGroupUpdate.bind(this)
         this.setupGroupsState = this.setupGroupsState.bind(this)
         this.onDeleteGroup = this.onDeleteGroup.bind(this)
         this.onModeChanged = this.onModeChanged.bind(this)
     }
 
     setupGroupsState() {
+        this.setState({
+            groupsIsLoading: true
+        })
         RestService.getGroups()
             .then((r) => {
                 const c = RestService.getCurrentGroupId();
+                console.log(c)
                 const groups = r.data;
-                let currentGroup = groups.find((g) => g.id === c);
-                if (currentGroup === undefined && groups?.length > 0) {
-                    currentGroup = groups[0];
-                }
+                let currentGroup = groups.find((g) => g.id == c);
+                // if (currentGroup === undefined && groups?.length > 0) {
+                //     console.log(currentGroup)
+                //     currentGroup = groups[0];
+                // }
+                groups.sort(this.compare)
                 this.setState({
                     currentGroup: currentGroup,
                     groups: groups
                 })
+            })
+            .finally(() => {
+                this.setState({
+                    groupsIsLoading: false
+                })
             });
+    }
+
+    compare( a, b ) {
+        if ( a.id < b.id ){
+            return -1;
+        }
+        if ( a.id > b.id ){
+            return 1;
+        }
+        return 0;
     }
 
     componentDidMount() {
@@ -67,10 +90,26 @@ class MainLayout extends React.Component {
         this.setupGroupsState()
     }
 
-    onGroupCreate(groupId, setCurrent) {
-        if (setCurrent && groupId !== this.state.currentGroup?.id) {
-            RestService.setCurrentGroupId(groupId)
+    onGroupCreate(group, setCurrent) {
+        if (setCurrent && group?.id != this.state.currentGroup?.id) {
+            RestService.setCurrentGroupId(group.id)
+            const joined = this.state.groups.concat(group);
+            this.setState({
+                currentGroup: group,
+                groups: joined
+            })
         }
+
+    }
+
+    onGroupUpdate(group, setCurrent) {
+        if (setCurrent && group?.id != this.state.currentGroup?.id) {
+            RestService.setCurrentGroupId(group.id)
+            this.setState({
+                currentGroup: group
+            })
+        }
+
     }
 
     onModeChanged(theme) {
@@ -135,9 +174,11 @@ class MainLayout extends React.Component {
                                         <GroupPage currentGroup={this.state.currentGroup}
                                                    groups={this.state.groups}
                                                    onGroupCreate={this.onGroupCreate}
+                                                   onGroupUpdate={this.onGroupUpdate}
                                                    onGroupChange={this.changeCurrentGroup}
                                                    onDeleteGroup={this.onDeleteGroup}
                                                    alert={this.props.alert}
+                                                   isLoading={this.state.groupsIsLoading}
                                         />
                                     </Route>
                                     <Route path={Paths.SETTINGS.path} exact>
