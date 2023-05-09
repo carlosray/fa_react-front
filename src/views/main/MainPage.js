@@ -13,6 +13,7 @@ import Title from "../../components/Title";
 import StepOperationTransfer from "./step/StepOperationTransfer";
 import StepOperationTransferReview from "./step/StepOperationTransferReview";
 import ValidatorService from "../../service/ValidatorService";
+import {Severities} from "../../model/severities";
 
 export const MainPageFormFields = {
     type: 'type',
@@ -22,7 +23,8 @@ export const MainPageFormFields = {
     fromAccount: 'fromAccount',
     toAccount: 'toAccount',
     commission: 'commission',
-    rate: 'rate'
+    rate: 'rate',
+    description: 'description'
 }
 
 export default function MainPage(props) {
@@ -31,7 +33,9 @@ export default function MainPage(props) {
     const [categories, setCategories] = React.useState([]);
     const [accounts, setAccounts] = React.useState([]);
     const [isCreating, setIsCreating] = React.useState(false);
+    const [creatingError, setCreatingError] = React.useState("");
     const [isLoading, setIsLoading] = React.useState(false);
+    const [resultOpId, setResultOpId] = React.useState(null);
 
     const [errors, setErrors] = React.useState({
         account: [],
@@ -40,61 +44,51 @@ export default function MainPage(props) {
         category: [],
         amount: [],
         commission: [],
-        rate: []
+        rate: [],
+        description: []
     })
 
     const [values, setValues] = React.useState({
         type: OperationTypes.OUT,
-        amount: 0,
+        amount: 1,
         category: {},
         account: {},
         commission: 0,
         rate: 1,
         fromAccount: {},
-        toAccount: {}
+        toAccount: {},
+        description: ""
     });
 
     useEffect(() => {
         if (props.group) {
             setIsLoading(true)
-            let categoriesLoading = true
-            let accountsLoading = true
-            RestService.getCategories(props.group.id)
-                .then(r => {
-                    const returnedCategories = r.data
-                    setCategories(returnedCategories)
-                    setValues({
-                        ...values,
-                        category: returnedCategories.find((c) => c.type === values.type),
-                    })
-                })
+            const cp = RestService.getCategories(props.group.id)
                 .catch((e) => {
                     props.alert("Failed to load categories", RestService.getErrorMessage(e))
                 })
-                .finally(() => {
-                    categoriesLoading = false
-                    setIsLoading(categoriesLoading || accountsLoading)
+            const ap = RestService.getAccounts(props.group.id)
+                .catch((e) => {
+                    props.alert("Failed to load accounts", RestService.getErrorMessage(e))
                 })
-
-            RestService.getAccounts(props.group.id)
-                .then(r => {
-                    const returnedAccounts = r.data
+            Promise.all([cp, ap])
+                .then((r) => {
+                    const returnedCategories = r[0].data
+                    const returnedAccounts = r[1].data
+                    setCategories(returnedCategories)
                     setAccounts(returnedAccounts)
                     setValues({
                         ...values,
+                        category: returnedCategories.find((c) => c.type === values.type),
                         account: returnedAccounts[0],
                         amount: returnedAccounts[0] ? returnedAccounts[0].balance.amount < 100 ? returnedAccounts[0].balance.amount : 100 : 0,
                         fromAccount: returnedAccounts[0],
                         toAccount: returnedAccounts[1],
                     })
                 })
-                .catch((e) => {
-                    props.alert("Failed to load accounts", RestService.getErrorMessage(e))
-                })
                 .finally(() => {
-                    accountsLoading = false
-                    setIsLoading(categoriesLoading || accountsLoading)
-                });
+                    setIsLoading(false)
+                })
         }
     }, [props.group]);
 
@@ -135,11 +129,15 @@ export default function MainPage(props) {
                 }
                 break
             case MainPageFormFields.amount:
-                if (values.type === OperationTypes.OUT) {
+                if (!value || parseInt(value) <= 0) {
+                    newErrors[field] = ["Amount must be greater than 0"]
+                } else if (values.type === OperationTypes.OUT) {
                     newErrors[field] = ValidatorService.validateAmount(value, values.account?.balance?.amount ? values.account?.balance?.amount : 0);
                 } else if (values.type === OperationTypes.TRANSFER) {
                     newErrors[field] = ValidatorService.validateAmount(value, values.fromAccount?.balance?.amount ? values.fromAccount?.balance?.amount : 0);
                     newErrors[MainPageFormFields.commission] = ValidatorService.validateCommission(values.commission, value, values.fromAccount?.balance?.amount ? values.fromAccount?.balance?.amount : 0);
+                } else {
+                    newErrors[field] = []
                 }
                 break
             case MainPageFormFields.fromAccount:
@@ -176,14 +174,91 @@ export default function MainPage(props) {
         setErrors(newErrors)
         if (Object.entries(newErrors).filter(([e, v],) => v.length > 0 && fields.indexOf(e) >= 0).length === 0) {
             if (activeStep === steps.length - 1) {
-                setIsCreating(true)
-
-                setTimeout(function () {
-                    setIsCreating(false)
-                }, 3000);
-
+                createOperation()
             }
             setActiveStep(activeStep + 1);
+        }
+    };
+
+    const createOperation = () => {
+        setIsCreating(true)
+        setCreatingError("")
+        RestService.createOperation(getOperationDetail(), values.description, props.group.id)
+            .then(r => {
+                const o = r.data
+                setResultOpId(o.id)
+                props.alert("Operation created", `Operation number ${o.id} successfully created`, Severities.SUCCESS)
+                tryUpdateBalance(new Date(), 0, 3)
+            })
+            .catch((e) => {
+                const msg = RestService.getErrorMessage(e)
+                props.alert("Failed create operation", msg)
+                setCreatingError(msg)
+            })
+            .finally(() => {
+                setIsCreating(false)
+            })
+    };
+
+    const tryUpdateBalance = (now, i, max) => {
+        if (i < max) {
+            setTimeout(function () {
+                console.log("tryUpdateBalance #" + i + 1)
+                RestService.getGroupBalance(props.group.id)
+                    .then((r) => {
+                        const b = r.data
+                        if (b.balance.lastUpdate < now) {
+                            tryUpdateBalance(now, i + 1, max)
+                        } else  {
+                            props.updateGroupBalance(b.balance)
+                        }
+                    })
+                    .catch((e) => {
+                        console.log("Error updating group balance: " + RestService.getErrorMessage(e))
+                    })
+            }, 1000);
+        }
+    }
+
+    const isCommission = () => {
+        return values[MainPageFormFields.commission] !== null && values[MainPageFormFields.commission] > 0;
+    };
+
+    const isRate = () => {
+        return values[MainPageFormFields.fromAccount].balance.currency !== values[MainPageFormFields.toAccount].balance.currency;
+    };
+    const getResultAmount = () => {
+        return (values[MainPageFormFields.amount] - (isCommission() ? values[MainPageFormFields.commission] : 0)) * (isRate() ? values[MainPageFormFields.rate] : 1)
+    };
+
+    const getOperationDetail = () => {
+        switch (values.type) {
+            case OperationTypes.IN:
+                return {
+                    type: OperationTypes.IN,
+                    fromCategory: values.category.id,
+                    toAccount: values.account.id,
+                    amount: values.amount
+                }
+            case OperationTypes.OUT:
+                return {
+                    type: OperationTypes.OUT,
+                    fromAccount: values.account.id,
+                    toCategory: values.category.id,
+                    amount: values.amount
+                }
+            case OperationTypes.TRANSFER:
+                return {
+                    type: OperationTypes.TRANSFER,
+                    fromAccount: values.fromAccount.id,
+                    toAccount: values.toAccount.id,
+                    amount: values.amount,
+                    commission: values.commission,
+                    rate: values.rate,
+                    resultAmount: getResultAmount()
+                }
+            default:
+                throw new Error('Unknown type ' + values.type);
         }
     };
 
@@ -238,9 +313,13 @@ export default function MainPage(props) {
                         onFieldChange={(prop, value) => handleChange(prop, value)}/>;
             case 2:
                 return values.type === OperationTypes.TRANSFER ?
-                    <StepOperationTransferReview values={values}/>
+                    <StepOperationTransferReview values={values}
+                                                 isCommission={isCommission}
+                                                 isRate={isRate}
+                                                 resultAmount={getResultAmount}
+                                                 onFieldChange={(prop, value) => handleChange(prop, value)}/>
                     :
-                    <StepOperationReview values={values}/>;
+                    <StepOperationReview values={values} onFieldChange={(prop, value) => handleChange(prop, value)}/>;
             default:
                 throw new Error('Unknown step');
         }
@@ -270,20 +349,31 @@ export default function MainPage(props) {
                         {activeStep === steps.length ? (
                             <React.Fragment>
                                 <Typography variant="h5" gutterBottom>
-                                    Thank you
+                                    {creatingError ? "Error" : "Thank you"}
                                 </Typography>
                                 {isCreating ? (
                                     <CircularProgress/>
+                                ) : creatingError ? (
+                                    <Typography variant="subtitle1">
+                                        {creatingError}
+                                    </Typography>
                                 ) : (
                                     <Typography variant="subtitle1">
-                                        Operation saved, number is #2001539.
+                                        Operation saved, number is {resultOpId}.
                                     </Typography>
                                 )
                                 }
                                 <Box sx={{display: 'flex', justifyContent: 'flex-end'}}>
-                                    <Button href={"/main"} disabled={isCreating}>
-                                        One more operation
-                                    </Button>
+                                    {creatingError ? (
+                                        <Button disabled={isCreating} onClick={createOperation}>
+                                            Try again
+                                        </Button>
+                                    ) : (
+                                        <Button href={"/main"} disabled={isCreating}>
+                                            One more operation
+                                        </Button>
+                                    )
+                                    }
                                 </Box>
                             </React.Fragment>
                         ) : (

@@ -16,6 +16,7 @@ import RestService from "../../service/RestService";
 import {Redirect} from "react-router-dom";
 import {Paths} from "../../model/paths";
 import ValidatorService from "../../service/ValidatorService";
+import LoadingButton from "../../components/LoadingButton";
 
 const theme = createTheme();
 
@@ -32,6 +33,7 @@ export default function SignIn(props) {
     })
 
     const [loggedIn, setLoggedIn] = React.useState(false)
+    const [isLoading, setIsLoading] = React.useState(false)
 
     const handleChange = (event) => {
         const field = event.target.name
@@ -62,10 +64,14 @@ export default function SignIn(props) {
             password: pwdValidation
         })
         if (emailValidation.length === 0 && pwdValidation.length === 0) {
+            setIsLoading(true)
             RestService.login(form.email, form.password)
                 .then(() => setLoggedIn(true))
                 .catch((e) => {
                     props.alert("Failed to login", RestService.getErrorMessage(e))
+                })
+                .finally(() => {
+                    setIsLoading(false)
                 })
         }
     };
@@ -121,15 +127,17 @@ export default function SignIn(props) {
                                                onChange={handleChange}/>}
                             label="Remember me"
                         />
-                        <Button
-                            type="submit"
+                        <LoadingButton
+                            loading={isLoading}
+                            done={loggedIn}
+                            // type="submit"
                             fullWidth
                             variant="contained"
                             sx={{mt: 3, mb: 2}}
                             onClick={handleSubmit}
                         >
                             Sign In
-                        </Button>
+                        </LoadingButton>
                         <Grid container>
                             <Grid item xs>
                                 <Link href="#" variant="body2">

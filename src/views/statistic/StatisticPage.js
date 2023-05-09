@@ -15,33 +15,24 @@ export default function StatisticPage(props) {
     useEffect(() => {
         if (props.group) {
             setIsLoading(true)
-            let categoriesLoading = true
-            let accountsLoading = true
-            RestService.getCategories(props.group.id)
-                .then(r => {
-                    const returnedCategories = r.data
-                    setCategories(returnedCategories)
-                })
+            const cp = RestService.getCategories(props.group.id)
                 .catch((e) => {
                     props.alert("Failed to load categories", RestService.getErrorMessage(e))
                 })
-                .finally(() => {
-                    categoriesLoading = false
-                    setIsLoading(categoriesLoading || accountsLoading)
-                })
-
-            RestService.getAccounts(props.group.id)
-                .then(r => {
-                    const returnedAccounts = r.data
-                    setAccounts(returnedAccounts)
-                })
+            const ap = RestService.getAccounts(props.group.id)
                 .catch((e) => {
                     props.alert("Failed to load accounts", RestService.getErrorMessage(e))
                 })
+            Promise.all([cp, ap])
+                .then((r) => {
+                    const returnedCategories = r[0].data
+                    const returnedAccounts = r[1].data
+                    setCategories(returnedCategories)
+                    setAccounts(returnedAccounts)
+                })
                 .finally(() => {
-                    accountsLoading = false
-                    setIsLoading(categoriesLoading || accountsLoading)
-                });
+                    setIsLoading(false)
+                })
         }
     }, [props.group]);
 
@@ -82,7 +73,7 @@ export default function StatisticPage(props) {
                 </Grid>
 
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                    <Paper sx={{p: 2, display: 'flex', flexDirection: 'column'}}>
                         <OperationsHistory group={props.group}/>
                     </Paper>
                 </Grid>

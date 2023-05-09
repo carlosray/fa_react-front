@@ -2,7 +2,7 @@ import React from "react";
 import {Redirect, Route, Switch} from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import MainPage from "../views/main/MainPage";
-import {CssBaseline} from "@mui/material";
+import {Backdrop, CircularProgress, CssBaseline} from "@mui/material";
 import {createTheme, ThemeProvider} from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Toolbar from "@mui/material/Toolbar";
@@ -35,6 +35,7 @@ class MainLayout extends React.Component {
         this.setupGroupsState = this.setupGroupsState.bind(this)
         this.onDeleteGroup = this.onDeleteGroup.bind(this)
         this.onModeChanged = this.onModeChanged.bind(this)
+        this.updateGroupBalance = this.updateGroupBalance.bind(this)
     }
 
     setupGroupsState() {
@@ -57,6 +58,9 @@ class MainLayout extends React.Component {
                     groups: groups
                 })
             })
+            .catch((e) => {
+                this.props.alert("Failed to load groups", RestService.getErrorMessage(e))
+            })
             .finally(() => {
                 this.setState({
                     groupsIsLoading: false
@@ -64,11 +68,11 @@ class MainLayout extends React.Component {
             });
     }
 
-    compare( a, b ) {
-        if ( a.id < b.id ){
+    compare(a, b) {
+        if (a.id < b.id) {
             return -1;
         }
-        if ( a.id > b.id ){
+        if (a.id > b.id) {
             return 1;
         }
         return 0;
@@ -84,6 +88,10 @@ class MainLayout extends React.Component {
     changeCurrentGroup(groupId) {
         RestService.setCurrentGroupId(groupId)
         this.setupGroupsState()
+    }
+
+    updateGroupBalance(balance) {
+        this.state.currentGroup.balance = balance
     }
 
     onDeleteGroup() {
@@ -109,6 +117,20 @@ class MainLayout extends React.Component {
                 currentGroup: group
             })
         }
+        const newGroups = new Array(this.state.groups.length)
+        let changed = false
+        this.state.groups.forEach((s, i) => {
+            newGroups[i] = s
+            if (newGroups[i].id === group.id) {
+                newGroups[i] = group
+                changed = true
+            }
+        })
+        if (changed) {
+            this.setState({
+                groups: newGroups
+            })
+        }
 
     }
 
@@ -122,6 +144,12 @@ class MainLayout extends React.Component {
     render() {
         return (
             <>
+                <Backdrop
+                    sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
+                    open={this.state.groupsIsLoading}
+                >
+                    <CircularProgress color="inherit"/>
+                </Backdrop>
                 <ThemeProvider theme={createTheme({
                     palette: {
                         mode: this.state.mode,
@@ -152,7 +180,8 @@ class MainLayout extends React.Component {
                                     </Route>
                                     <Route path={Paths.MAIN.path} exact>
                                         {this.state.currentGroup
-                                            ? <MainPage group={this.state.currentGroup} alert={this.props.alert}/>
+                                            ? <MainPage group={this.state.currentGroup} alert={this.props.alert}
+                                                        updateGroupBalance={this.updateGroupBalance}/>
                                             : <NoGroupTypography/>}
                                     </Route>
                                     <Route path={Paths.STATISTIC.path} exact>

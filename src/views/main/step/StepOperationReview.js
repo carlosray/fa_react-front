@@ -10,6 +10,10 @@ import Divider from "@mui/material/Divider";
 export default function StepOperationReview(props) {
     const isIncome = props.values[MainPageFormFields.type] === OperationTypes.IN;
 
+    const handleChange = (prop) => (event) => {
+        props.onFieldChange(prop, event.target.value)
+    };
+
     return (
         <React.Fragment>
             <Grid container spacing={2}>
@@ -24,6 +28,7 @@ export default function StepOperationReview(props) {
                                     sx={{fontWeight: 'bold'}}
                                     gutterBottom>{isIncome ? "To account" : "From account"}</Typography>
                                 <Typography sx={{fontWeight: 'bold'}} gutterBottom>{isIncome ? "From category" : "To category"}</Typography>
+                                {props.values[MainPageFormFields.description] && <Typography sx={{fontWeight: 'bold'}} gutterBottom>Description</Typography>}
                             </Grid>
                             <Grid item xs={6}>
                                 <Typography gutterBottom
@@ -37,6 +42,7 @@ export default function StepOperationReview(props) {
                                     gutterBottom>{`${props.values[MainPageFormFields.amount]}${cIcons[props.values[MainPageFormFields.account].balance.currency]}`}</Typography>
                                 <Typography gutterBottom>{props.values[MainPageFormFields.account].name}</Typography>
                                 <Typography gutterBottom>{props.values[MainPageFormFields.category].name}</Typography>
+                                <Typography gutterBottom>{props.values[MainPageFormFields.description]}</Typography>
                             </Grid>
                         </React.Fragment>
                     </Grid>

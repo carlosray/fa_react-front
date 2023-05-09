@@ -1,5 +1,5 @@
 import React from "react";
-import {Backdrop, CircularProgress, FormControl, InputLabel, Select, Switch, TableCell, TextField} from "@mui/material";
+import {FormControl, InputLabel, Select, Switch, TableCell, TextField} from "@mui/material";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from "@mui/material/Unstable_Grid2";
 import CommonEditTable from "../../components/CommonEditTable";
@@ -83,7 +83,6 @@ export default function GroupPage(props) {
     };
 
     const validate = (field, value) => {
-        console.log("validate group called")
         switch (field) {
             case 'name':
                 return ValidatorService.validateSpecified(field, value);

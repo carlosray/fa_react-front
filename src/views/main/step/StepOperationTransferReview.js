@@ -9,9 +9,13 @@ import Divider from "@mui/material/Divider";
 import {Stack} from "@mui/material";
 
 export default function StepOperationTransferReview(props) {
-    const isCommission = props.values[MainPageFormFields.commission] !== null && props.values[MainPageFormFields.commission] > 0;
-    const isRate = props.values[MainPageFormFields.fromAccount].balance.currency !== props.values[MainPageFormFields.toAccount].balance.currency;
-    const resultAmount = (props.values[MainPageFormFields.amount] - (isCommission ? props.values[MainPageFormFields.commission] : 0)) * (isRate ? props.values[MainPageFormFields.rate] : 1);
+    const isCommission = props.isCommission();
+    const isRate = props.isRate();
+    const resultAmount = props.resultAmount();
+
+    const handleChange = (prop) => (event) => {
+        props.onFieldChange(prop, event.target.value)
+    };
 
     return (
         <React.Fragment>

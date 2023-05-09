@@ -94,6 +94,16 @@ class RestService {
         return axios.delete(`${API_URL}/groups/${groupId}`)
     }
 
+    createOperation(detail, description, groupId): Promise<AxiosResponse> {
+        console.log("createOperation")
+        return axios.post(`${API_URL}/operations`,
+            {
+                groupId: groupId,
+                description: description,
+                detail: detail
+            })
+    }
+
     createGroup(name, description, currency): Promise<AxiosResponse> {
         console.log("createGroup")
         return axios.post(`${API_URL}/groups`,
@@ -166,6 +176,11 @@ class RestService {
         )
     }
 
+    getGroupBalance(groupId): Promise<AxiosResponse> {
+        console.log("getGroupBalance group = " + groupId)
+        return axios.get(`${API_URL}/balance/group/${groupId}`)
+    }
+
     updateCategory(groupId, id, name, type): Promise<AxiosResponse> {
         console.log("updateCategory group = " + groupId)
         return axios.put(`${API_URL}/categories/group/${groupId}`,
@@ -204,7 +219,7 @@ class RestService {
 
     updateAccount(groupId, id, name, currency): Promise<AxiosResponse> {
         console.log("updateAccount group = " + groupId)
-        return axios.put(`${API_URL}/categories/group/${groupId}`,
+        return axios.put(`${API_URL}/accounts/group/${groupId}`,
             {
                 "id": id,
                 "name": name,
