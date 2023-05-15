@@ -14,14 +14,26 @@ export default function CommonEditForm(props) {
     }, [props.initialObj]);
 
     const handleChange = (prop) => (event) => {
-        const validation = props.validate ? props.validate(prop, event.target.value) : []
-
+        if (props.validationProps.indexOf(prop) > -1) {
+            const validation = props.validate ? props.validate(prop, event.target.value) : []
+            setErrors({...errors, [prop]: validation});
+        }
         setValues({...values, [prop]: event.target.value});
-        setErrors({...errors, [prop]: validation});
     };
 
     const handleSave = () => {
-        props.onSave(values)
+        const newErrors = {}
+        let hasErrors = false
+        for (const i in props.validationProps) {
+            const prop = props.validationProps[i]
+            newErrors[prop] = props.validate(prop, values ? values[prop] : values)
+            hasErrors = newErrors[prop] && newErrors[prop].length > 0
+        }
+        if (hasErrors) {
+            setErrors(newErrors);
+        } else {
+            props.onSave(values)
+        }
     };
 
     const handleCancel = () => {
@@ -44,6 +56,7 @@ export default function CommonEditForm(props) {
                         </Button>
 
                         <Button
+                            type="submit"
                             variant="contained"
                             onClick={handleSave}
                             sx={{mt: 3, ml: 1}}

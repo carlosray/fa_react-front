@@ -99,15 +99,16 @@ class MainLayout extends React.Component {
     }
 
     onGroupCreate(group, setCurrent) {
+        let cGroup = this.state.currentGroup;
         if (setCurrent && group?.id != this.state.currentGroup?.id) {
             RestService.setCurrentGroupId(group.id)
-            const joined = this.state.groups.concat(group);
-            this.setState({
-                currentGroup: group,
-                groups: joined
-            })
+            cGroup = group
         }
-
+        const joined = this.state.groups.concat(group);
+        this.setState({
+            currentGroup: cGroup,
+            groups: joined
+        })
     }
 
     onGroupUpdate(group, setCurrent) {

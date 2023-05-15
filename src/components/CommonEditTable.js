@@ -157,6 +157,7 @@ export default function CommonEditTable(props) {
                                             title={props.title}
                                             form={props.form}
                                             validate={props.validate}
+                                            validationProps={props.validationProps}
                                             onSave={handleSave}
                                             onCancel={handleCloseSave}/>
                         </Grid>
@@ -169,6 +170,8 @@ export default function CommonEditTable(props) {
                             <CommonEditForm initialObj={null}
                                             title={props.title}
                                             form={props.form}
+                                            validate={props.validate}
+                                            validationProps={props.validationProps}
                                             onSave={handleSave}
                                             onCancel={handleCloseSave}/>
                         </Grid>

@@ -6,6 +6,7 @@ import CommonEditTable from "../../components/CommonEditTable";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import {AvailableCurrencies, cIcons} from "../../model/currencies";
 import MenuItem from "@mui/material/MenuItem";
+import FormHelperText from "@mui/material/FormHelperText";
 import IconButton from "@mui/material/IconButton";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -100,7 +101,7 @@ export default function GroupPage(props) {
             id: g.id,
             name: g.name,
             description: g.description,
-            setCurrent: true,
+            setCurrent: false,
             users: g.users,
             amount: g.balance.amount,
             currency: g.balance.currency,
@@ -165,7 +166,7 @@ export default function GroupPage(props) {
                                            label="Name"
                                            variant="standard"
                                            error={errors?.name && errors.name.length !== 0}
-                                           helperText={errors?.name?.join('. ')}
+                                           helperText={errors?.name ? errors.name.join('. ') : ''}
                                            value={values?.name ? values?.name : ''}
                                            onChange={handleChange('name')}/>
                             </Grid>
@@ -174,7 +175,7 @@ export default function GroupPage(props) {
                                            label="Description"
                                            variant="standard"
                                            error={errors?.description && errors.description.length !== 0}
-                                           helperText={errors?.description?.join('. ')}
+                                           helperText={errors?.description ? errors.description.join('. ') : ''}
                                            value={values?.description ? values?.description : ''}
                                            onChange={handleChange('description')}/>
                             </Grid>
@@ -201,18 +202,20 @@ export default function GroupPage(props) {
                                         id="demo-simple-select"
                                         value={values?.currency ? values.currency : ''}
                                         error={errors?.currency && errors.currency.length !== 0}
-                                        helperText={errors?.currency?.join('. ')}
                                         label="Currency"
                                         onChange={handleChange('currency')}
                                     >
                                         {AvailableCurrencies.map((c) => <MenuItem key={c}
                                                                                   value={c}>{c}</MenuItem>)}
                                     </Select>
+                                    <FormHelperText error={errors?.currency && errors.currency.length !== 0}>
+                                        {errors?.currency ? errors.currency.join('. ') : ''}
+                                    </FormHelperText>
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} sm={6} sx={{mt: 3}}>
                                 <FormControlLabel
-                                    control={<Switch defaultChecked onChange={handleChange('setCurrent')}/>}
+                                    control={<Switch onChange={handleChange('setCurrent')}/>}
                                     label="Set current"/>
 
                             </Grid>
@@ -221,6 +224,7 @@ export default function GroupPage(props) {
                     onDelete={handleDelete}
                     onSave={handleSave}
                     validate={validate}
+                    validationProps={['name', 'description', 'currency']}
                 />
                 <Dialog
                     open={isOpenChangeAlert !== null}

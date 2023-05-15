@@ -7,6 +7,8 @@ import I18n from "../../i18n/I18n";
 import MenuItem from "@mui/material/MenuItem";
 import {OperationTypes} from "../../model/operationTypes";
 import {Severities} from "../../model/severities";
+import ValidatorService from "../../service/ValidatorService";
+import FormHelperText from "@mui/material/FormHelperText";
 
 
 export default function CategoryPage(props) {
@@ -85,6 +87,17 @@ export default function CategoryPage(props) {
             })
     };
 
+    const validate = (field, value) => {
+        switch (field) {
+            case 'name':
+                return ValidatorService.validateSpecified(field, value);
+            case 'type':
+                return ValidatorService.validateSpecified(field, value);
+            default:
+                return [];
+        }
+    }
+
     return (
         <>
             <Grid container spacing={2}>
@@ -119,12 +132,15 @@ export default function CategoryPage(props) {
                                        label="Name"
                                        variant="standard"
                                        value={values?.name ? values?.name : ''}
+                                       error={errors?.name && errors.name.length !== 0}
+                                       helperText={errors?.name ? errors.name.join('. ') : ''}
                                        onChange={handleChange('name')}/>
                             <FormControl fullWidth variant="standard">
                                 <InputLabel id="demo-simple-select-label">Type</InputLabel>
                                 <Select
                                     labelId="demo-simple-select-label"
                                     id="demo-simple-select"
+                                    error={errors?.type && errors.type.length !== 0}
                                     value={values?.type ? values.type : ''}
                                     label="Currency"
                                     onChange={handleChange('type')}
@@ -136,12 +152,17 @@ export default function CategoryPage(props) {
                                         <I18n>{OperationTypes.OUT}</I18n>
                                     </MenuItem>
                                 </Select>
+                                <FormHelperText error={errors?.type && errors.type.length !== 0}>
+                                    {errors?.type ? errors.type.join('. ') : ''}
+                                </FormHelperText>
                             </FormControl>
 
                         </Box>
                     )}
                     onDelete={handleDelete}
                     onSave={handleSave}
+                    validate={validate}
+                    validationProps={['name', 'type']}
                 />
             </Grid>
         </>

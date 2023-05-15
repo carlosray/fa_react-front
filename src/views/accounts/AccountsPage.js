@@ -7,6 +7,8 @@ import {AvailableCurrencies, cIcons, Currencies} from "../../model/currencies";
 import MenuItem from "@mui/material/MenuItem";
 import RestService from "../../service/RestService";
 import {Severities} from "../../model/severities";
+import ValidatorService from "../../service/ValidatorService";
+import FormHelperText from "@mui/material/FormHelperText";
 
 
 export default function AccountsPage(props) {
@@ -86,6 +88,17 @@ export default function AccountsPage(props) {
             })
     };
 
+    const validate = (field, value) => {
+        switch (field) {
+            case 'name':
+                return ValidatorService.validateSpecified(field, value);
+            case 'currency':
+                return ValidatorService.validateSpecified(field, value);
+            default:
+                return [];
+        }
+    }
+
     const toFlatten = (a) => {
         return {
             id: a.id,
@@ -146,38 +159,31 @@ export default function AccountsPage(props) {
                                        label="Name"
                                        variant="standard"
                                        value={values?.name ? values?.name : ''}
+                                       error={errors?.name && errors.name.length !== 0}
+                                       helperText={errors?.name ? errors.name.join('. ') : ''}
                                        onChange={handleChange('name')}/>
-
-                            <FormControl fullWidth>
-                                <InputLabel id="users-select-label">Users</InputLabel>
-                                <Select
-                                    labelId="users-select-label"
-                                    id="users-select"
-                                    label="Users"
-                                    onChange={handleChange('users')}
-                                    disabled
-                                    value={''}
-                                    variant="standard"
-                                >
-                                    {/*{group.users?.map((u) => <MenuItem value={u}>u</MenuItem>)}*/}
-                                </Select>
-                            </FormControl>
                             <FormControl fullWidth variant="standard">
                                 <InputLabel id="demo-simple-select-label">Currency</InputLabel>
                                 <Select
                                     labelId="demo-simple-select-label"
                                     id="demo-simple-select"
+                                    error={errors?.currency && errors.currency.length !== 0}
                                     value={values?.currency ? values.currency : ''}
                                     label="Currency"
                                     onChange={handleChange('currency')}
                                 >
                                     {AvailableCurrencies.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                                 </Select>
+                                <FormHelperText error={errors?.currency && errors.currency.length !== 0}>
+                                    {errors?.currency ? errors.currency.join('. ') : ''}
+                                </FormHelperText>
                             </FormControl>
                         </Box>
                     )}
                     onDelete={handleDelete}
                     onSave={handleSave}
+                    validate={validate}
+                    validationProps={['name', 'currency']}
                 />
             </Grid>
         </>
